@@ -1,0 +1,171 @@
+---
+title: 'Final Project Report'
+author: "Kebei Yu, Aoran Cui"
+date: "Due: 12.15"
+output: html_notebook
+---
+### Set up
+```{r}
+# load necessary packages
+library(tidyverse)
+library(mosaic)
+library(dcData)
+library(readr)
+library(maps)
+library(dplyr)
+```
+
+```{r}
+# load packages for Rstudio Cloud
+library(tidyverse)
+library(mosaic)
+install.packages("devtools")
+devtools::install_github("mdbeckman/dcData")
+library(readr)
+library(dplyr)
+```
+### Introduction
+__In this project, we want to explore data related to the ranking of American universities. The problems we hope to solve is which factors are more relevant to the overall ranking of American universities, such as geographical locations or school hardware foundations. Through the data analysis of the top 300 universities in the United States, we hope to be able to identify what conditions the university is most likely to be ranked high.__
+
+### Data sources and data intake
+```{r}
+ProjData <- read.csv("cwurData.csv") %>% filter(year == 2015)
+ProjData2 <- read.csv("school_and_country_table.csv")
+ProjData3 <- read.csv("world-universities.csv")
+```
+__These data were published by The Center for World University Rankings (CWUR) in 2019. And CWUR performed quantitative research to assess the quality of education, alumni employment, quality of faculty, and research performance without relying on surveys and university data submissions. Reader can download the data from the following link:__
+<https://www.kaggle.com/mylesoneill/world-university-rankings/download>
+
+```{r}
+MainStates <- map_data("state")
+```
+This data is from __maps__ library which provide basic geographical data of main states in the US.
+
+### Data inspection 
+```{r}
+glimpse(ProjData)
+head(ProjData2)
+tail(ProjData3)
+summary(ProjData3)
+```
+By checking the data using above code, the data now is ready and able to explore and show clearly. We have more than two data and the format of the data is tidy, which facilitates further induction and analysis.
+
+### Data cleaning and wrangling
+```{r}
+ProjData2 <-ProjData2 %>% mutate(country = gsub(pattern = "United States of America", replacement = "USA", country))
+```
+We notice that tables have inconsistent country names which cause problems for our future join command. Thus, we use regular expression to grab country name "United States of America" and change it to "USA" which is consistent with other table.
+
+```{r}
+ProjData3$NAME <- tolower(ProjData3$NAME)
+ProjData2$school_name <- tolower(ProjData2$school_name)
+ProjData$institution <- tolower(ProjData$institution)
+```
+Also, we notice that the texts format is different in upper and lower cases. And we unify all the text to lower cases.
+
+```{r}
+USData <- ProjData %>% inner_join(ProjData3 %>% select(NAME,LONGITUDE, LATITUDE), by = c("institution" = "NAME"))
+```
+To explore US university data with geographic element. We would like to map some university attributes on the US map. So we add longitude and latitude data from ProjData3 to ProjData by inner joining these to table.
+
+```{r}
+USData2 <- USData
+rankData <- USData2$world_rank
+for(x in 1:length(rankData)){
+  if (rankData[x] <=10){
+    USData2$world_rank[x] <- -10
+  } else if(rankData[x] > 10 && rankData[x] <= 50){
+    USData2$world_rank[x] <- -50
+  } else if(rankData[x] > 50 && rankData[x] <= 100){
+    USData2$world_rank[x] <- -100
+  } else if(rankData[x] > 100 && rankData[x] <= 200){
+    USData2$world_rank[x] <- -200
+  } else{
+    USData2$world_rank[x] <- -300
+  }
+}
+```
+We divide all universities in groups and try to find the relation between rank and different variables.
+
+```{r}
+USData3 <- USData
+rankData <- USData3$world_rank
+for(x in 1:length(rankData)){
+  if(rankData[x] <= 50){
+    USData3$world_rank[x] <- "Top50"
+  } else if(rankData[x] > 50 && rankData[x] <= 100){
+    USData3$world_rank[x] <- "Top50-100"
+  } else if(rankData[x] > 100 && rankData[x] <= 200){
+    USData3$world_rank[x] <- "Top100-200"
+  } else{
+    USData3$world_rank[x] <- "Others"
+  }
+}
+```
+
+We bin the world rank into different groups for our future exploration.
+
+## Visualization
+### Scatter plot
+```{r}
+ggplot(ProjData %>% filter(world_rank <= 200), aes(x=citations, y=score)) + 
+  geom_point(aes(color=country,size=citations)) + 
+  labs(x="Rank of Citations", 
+       y="Score",
+       title="Citations Vs Score against Country & Citations")
+```
+![](scatter.jpg)
+Scatter1
+
+```{r}
+ggplot(ProjData %>% filter(world_rank <= 200, citations <= 100), aes(x=citations, y=score)) + 
+  geom_point(aes(color=country,size=citations)) + 
+  stat_smooth(method = lm) + 
+  labs(x="Rank of Citations", 
+       y="Score",
+       title="Citations Vs Score against Country & Citations")
+```
+![](scatter2.jpg)
+Scatter2
+
+__We aim to discover the relationship between rank of citations and the score of university. So, we make a scatter plot with rank of citations as the x-axis, score as the y-axis. From the scatter2 we can see that when rank of citations is in top 100, it has a relatively positive relationship with the total score. In other words, as the rank of citations goes higher, the total score of a university tends to be higher. However, the scatter1 suggests that when the rank of citations exceeds top 100, there is no obvious relationship between rank of citations and the total score. Besides, we find that universities in USA, United Kingdom, Australia take part most of the top 100 universities.__
+
+### Choropleth map
+```{r}
+ggplot() + 
+  geom_polygon(data=MainStates, aes(x=long, y=lat, group=group),
+                color="black", fill="white")+ 
+  geom_point(data = USData2 %>% filter(LONGITUDE > -140),aes(x = LONGITUDE, y = LATITUDE, size = world_rank), color = "blue", alpha = .5) +
+  theme(legend.position = "top")
+```
+=======
+![](Map1.jpg)
+Map1
+
+__We are interested in the geographical distribution of US university and if there is any relationship between the geographical location and the rank of the university. From Map1, we can see that the east of US generally has more Top200 universities than the west of US. And universities tend to locate at the coastline of a state if the state is connected to sea.__ 
+
+### Decision Tree Diagram
+
+```{r}
+AboutRank <-
+  party::ctree(world_rank == "Top50" ~ quality_of_education + quality_of_faculty + publications + influence, data = USData3)
+plot(AboutRank, type = "simple")
+```
+![](Tree1.png)
+Tree1
+
+__We want to find the correlation between the rank and several variables such as 'quality of education', 'quality of faculty', and 'influence'. Thus we make a tree diagram to divide all cases in group and find the variable that will affect most in the rank. In interpreting this tree, note that each outcome node includes the quantities n and y which represent, respectively, the total number of universities in the group and the probability of ranking in Top50.__
+
+__Within each vertex, there is a notation like p < 0.001. This is not the part of the function itself. It is just used to show that the size of the data is large enough to split at this node. In the graph, each node has p < 0.001, so we has strong confidence that the data is convincing.__
+
+__After observing this diagram, we can find that node 3 marks a group of 94.1% probability. This result is substantially larger than other groups which indicates that quality of faculty rank in top 63 and influence rank within top 61 are associated with elevated probability of getting in top 50 of the total rank according to the USData3 data.__
+
+__Also, we can find that node 7 marks a group of 0% probability. This result is substantially smaller than other groups which indicates that quality of faculty rank larger than 63 and quality of education rank larger than 61 are associated with decreasing probability of high rank according to the USData3 data.__
+
+### Conclusion
+
+__To conclude, in this project we try to employ different techniques such as regression line, decision tree to explore factors that affect university world rank. And we find that citations rank has a positive relationship with total rank when the  citation rank is within 100. From the map, it can be observed that geographical differences also indicate different density of top universities. Furthermore, by using decision tree, we find the correlation between the rank and several variables such as 'quality of education', 'quality of faculty', and 'influence' with a strong confidence. Intuitively, the higher the ranking of these three factors, the higher the ranking of the university. However, decision tree provides us more detailed information on how these factors affect the total rank.__
+
+
+
+
