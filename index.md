@@ -71,7 +71,7 @@ This data provides boundaries for the States of the United States in the 50 stat
 ### Results
 * Internal prediction is better than mixed prediction and mixed prediction better than external because internal prediction is the best indicator or factor for university rank.
 * Logistic regression is the best overall.
-* Pearson Correlation proves our outcomes because internal features > external features.
+* Pearson Correlation proves our outcomes because internal features are better than external features.
 
 ### Limitation
 * Only use one rank data, different rank data may have different results.
