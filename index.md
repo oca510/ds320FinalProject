@@ -3,7 +3,7 @@
 
 Kebei Yu
 
-Yulun We
+Yulun Wu
 
 Chaolong Shi
 
@@ -55,9 +55,29 @@ This data provides boundaries for the States of the United States in the 50 stat
 
 ## Part2: Model Analysis
 
-## Part3: Findings and Limitations
+## Part3: Findings, Results and Limitations
+### Findings
+1.Internal prediction >mixed prediction > better than external.
+* Both training accuracy and test accuracy is over 90%. In external factors we can see that logistic regression is all over 90% but the other three groups, especially random forest and KNN, are below 80%. In accuracy of mixed factors, although most of them are kind of the same with internal factors, KNN in the accuracy of mixed factors is lower than the KNN from internal factors.
+![](Finding1.png)
+
+2.Logistic regression is the best overall.
+* There are four different modules as we can see in the screenshot below. Both training accuracy and test accuracy in logistic regression are over 95% from our module. However, in the accuracy of the decision tree, internal and mixed factors are better than the external one because the test accuracy of external factors is only 64%. So compared with the other three modules, accuracy of logistic regression is the best module we found.
+![](Finding2.png)
+
+3. Logistic regression, all over 95% test accuracy.
+![](Finding3.png)
+
+### Results
+* Internal prediction is better than mixed prediction and mixed prediction better than external because internal prediction is the best indicator or factor for university rank.
+* Logistic regression is the best overall.
+* Pearson Correlation proves our outcomes because internal features > external features.
+
+### Limitation
+* Only use one rank data, different rank data may have different results.
+* Data of internal factors may be different from the real situation. (man-made data, subjective to the people who create the data). For example, quality_of_faculty is an abstract concept which lacks acknowledged standards to evaluate.
 
 ### Conclusion
-
+Based on the findings, results and limitations we talked about above. We need more data to help us with training modules.
 
 #### Link to Kaggle Profile:https://oca510.github.io/320html/
